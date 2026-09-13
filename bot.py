@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
     IDENTITY,
     BIO,
     SKILLS,
-    PHOTO,
     TELEGRAM,
     INSTAGRAM,
     GITHUB,
@@ -262,22 +261,6 @@ async def get_bio(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def get_skills(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["skills"] = [x.strip() for x in update.message.text.split(",") if x.strip()][:12]
-    await update.message.reply_text("📸 Send your profile photo.")
-    return PHOTO
-
-
-async def get_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message.photo:
-        await update.message.reply_text("Please send a photo.")
-        return PHOTO
-
-    photo = update.message.photo[-1]
-    tg_file = await photo.get_file()
-
-    # Telegram file URL is only valid while accessible through the bot token.
-    # For a production bot, upload the image to object storage and use that URL.
-    context.user_data["photo_url"] = tg_file.file_path
-
     await update.message.reply_text(
         "🔗 Send your Telegram username or full link.\n"
         "Example: @rohitx"
@@ -344,6 +327,7 @@ async def get_theme(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Placeholder email; add your own email field later if desired.
     context.user_data["email"] = ""
 
+    context.user_data["photo_url"] = DEFAULT_PHOTO
     html = profile_to_html(context.user_data)
 
     document = io.BytesIO(html.encode("utf-8"))
@@ -379,7 +363,6 @@ def main():
             IDENTITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_identity)],
             BIO: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_bio)],
             SKILLS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_skills)],
-            PHOTO: [MessageHandler(filters.PHOTO, get_photo)],
             TELEGRAM: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_telegram)],
             INSTAGRAM: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_instagram)],
             GITHUB: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_github)],
